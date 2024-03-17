@@ -1,17 +1,34 @@
 import { useState } from "react";
 
-const initialItems = [
-  { id: 1, description: "Passports", quantity: 2, packed: false },
-  { id: 2, description: "Socks", quantity: 12, packed: true },
-];
-
 function App() {
+  const [items, setItems] = useState([]);
+
+  function handelAddItem(item) {
+    setItems((items) => [...items, item]);
+  }
+
+  function handelDeleteItem(id) {
+    setItems((items) => items.filter((item) => item.id !== id));
+  }
+
+  function handelToggelItem(id) {
+    setItems((items) =>
+      items.map((item) =>
+        item.id === id ? { ...item, packed: !item.packed } : item
+      )
+    );
+  }
+
   return (
     <div className="app">
       <Logo />
-      <Form />
-      <PackingeList />
-      <Stats />
+      <Form onAddItems={handelAddItem} />
+      <PackingeList
+        items={items}
+        onDeleteItem={handelDeleteItem}
+        onToggelItem={handelToggelItem}
+      />
+      <Stats items={items} />
     </div>
   );
 }
@@ -22,7 +39,7 @@ function Logo() {
 
 // controlled elements we create state fro the elements in the form
 
-function Form() {
+function Form({ onAddItems }) {
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState(1);
 
@@ -32,7 +49,7 @@ function Form() {
     if (!description) return;
     const newItem = { id: Date.now(), description, quantity, packed: false };
     console.log(newItem);
-
+    onAddItems(newItem);
     setDescription("");
     setQuantity(1);
   }
@@ -61,33 +78,49 @@ function Form() {
   );
 }
 
-function PackingeList() {
+function PackingeList({ items, onDeleteItem, onToggelItem }) {
   return (
     <div className="list">
       <ul>
-        {initialItems.map((item) => (
-          <Item item={item} key={item.id} />
+        {items.map((item) => (
+          <Item
+            item={item}
+            key={item.id}
+            onDeleteItem={onDeleteItem}
+            onToggelItem={onToggelItem}
+          />
         ))}
       </ul>
     </div>
   );
 }
 
-function Item({ item }) {
+function Item({ item, onDeleteItem, onToggelItem }) {
   return (
     <li>
+      <input
+        type="checkbox"
+        value={item.packed}
+        onChange={() => onToggelItem(item.id)}
+      />
       <span style={item.packed ? { textDecoration: "line-through" } : {}}>
         {item.quantity} {item.description}
       </span>
-      <button>❌</button>
+      <button onClick={() => onDeleteItem(item.id)}>❌</button>
     </li>
   );
 }
 
-function Stats() {
+function Stats({ items }) {
+  const numItems = items.length;
+  const numPacked = items.filter((item) => item.packed).length;
+  const percentage = Math.round((numPacked / numItems) * 100);
   return (
     <footer className="stats">
-      <em>You have x items in your list you have packed x items</em>
+      <em>
+        You have {numItems} items in your list you have packed {numPacked}
+        {percentage}% items
+      </em>
     </footer>
   );
 }
